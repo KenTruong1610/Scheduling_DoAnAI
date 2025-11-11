@@ -1,6 +1,6 @@
 # ==========================
 #  GREY WOLF OPTIMIZER (GWO)
-#  Author: Phước - Nhóm 8, Môn AI
+#  Author: Hữu Phước - Nhóm 8, Môn AI
 #  Description: Thuật toán tối ưu bầy sói xám (Grey Wolf Optimizer)
 #  dùng để giải bài toán Scheduling (phân công N job cho M máy sao cho
 #  makespan nhỏ nhất)
@@ -12,6 +12,13 @@ import math
 import time
 import copy
 from typing import List, Tuple, Dict, Any, Union
+
+# Import các lớp cốt lõi trong project
+from Core.scheduler import Scheduler
+from Core.schedule import Schedule
+from Core.machine import Machine
+from Core.job import Job
+
 
 # ==========================
 # 1. Chuẩn hóa dữ liệu job
@@ -165,16 +172,44 @@ def gwo_schedule(jobs,
 
 
 # ==========================
-# 4. Kiểm thử nhanh (chạy độc lập)
+# 4. Class GWOScheduler (tích hợp vào project)
+# ==========================
+class GWOScheduler(Scheduler):
+    """Triển khai thuật toán GWO kế thừa từ Scheduler"""
+    def __init__(self, jobs, machines, pop_size=30, iters=100):
+        super().__init__(jobs, machines)
+        self.pop_size = pop_size
+        self.iters = iters
+
+    def schedule(self):
+        """Thực thi thuật toán GWO để lập lịch"""
+        schedule, makespan, info = gwo_schedule(
+            jobs=self.jobs,
+            m=len(self.machines),
+            pop_size=self.pop_size,
+            iters=self.iters
+        )
+        self.best_schedule = schedule
+        self.best_score = makespan
+        return schedule, makespan, info
+
+    def evaluate(self, schedule):
+        """Đánh giá kết quả lập lịch"""
+        s = Schedule(self.machines, self.jobs)
+        return s.evaluate()
+
+
+# ==========================
+# 5. Kiểm thử nhanh (chạy độc lập)
 # ==========================
 if __name__ == "__main__":
-    # Sinh 10 job ngẫu nhiên và 3 máy
     random.seed(1)
     jobs = [random.randint(5, 20) for _ in range(10)]
     m = 3
 
     print("Danh sách job:", jobs)
-    schedule, best, info = gwo_schedule(jobs, m, pop_size=25, iters=100, seed=42, verbose=True)
+    gwo = GWOScheduler(jobs, [Machine(i) for i in range(m)], pop_size=25, iters=100)
+    schedule, best, info = gwo.schedule()
 
     print("\n--- KẾT QUẢ ---")
     print("Best makespan:", best)
